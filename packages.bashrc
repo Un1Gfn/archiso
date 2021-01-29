@@ -18,26 +18,23 @@ function colorecho {
   echo -ne "\033[$1m"
   echo -n  "$2"
   echo -ne "\033[0m"
+  echo
 }
 
 function prepare {
-  echo -n "Have you updated package db and file db? "
-  read -r
+  read -rp "Have you updated package db and file db? "
   echo
 }
 
 function str_superset {
-  # echo -n "###"
-  # comm -3 -1 <(echo "$1") <(echo "$2")
-  # echo "###"
   { 
     (($#==2)) &&
-    [ -z "$(comm -3 -1 <(echo "$1") <(echo "$2"))" ] 
+    [ -z "$(comm -3 -1 <(echo -n "$1") <(echo -n "$2"))" ] 
   } || { echo "${FUNCNAME[0]}: error"; return 1; }
 }
 
 function str_minus {
-  comm -3 -2 <(echo "$1") <(echo "$2")
+  comm -3 -2 <(echo -n "$1") <(echo -n "$2")
 }
 
 function str_end_with_newline_sorted {
@@ -73,7 +70,7 @@ function parse_conf {
   local -r BASELINE="$(grep -v '#' "$BASELINE0")"
   local -r RELENG0="/usr/share/archiso/configs/releng/packages.x86_64"
   local -r RELENG="$(grep -v '#' "$RELENG0")"
-  { 
+  {
     str_end_with_newline_sorted "$BASELINE" && 
     str_end_with_newline_sorted "$RELENG" &&
     str_end_with_newline_sorted "$UNQ"
@@ -81,13 +78,11 @@ function parse_conf {
 
   str_superset "$RELENG" "$BASELINE" || { echo "${FUNCNAME[0]}: error 3"; return 1; }
 
-  # coloron 33
-  echo "removed from $RELENG0:"
+  colorecho 34 "removed from $RELENG0:"
   str_minus "$RELENG" "$UNQ"
-  # coloroff
   echo
 
-  echo "added:"
+  colorecho 35 "in addition to $RELENG0:"
   str_minus "$UNQ" "$RELENG"
   echo
 
@@ -111,8 +106,10 @@ function parse_conf {
 
 echo
 { 
-  # prepare &&
+  prepare &&
   parse_conf packages.conf &&
   echo
 }
 echo
+
+# dict
