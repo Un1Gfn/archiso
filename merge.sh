@@ -4,115 +4,19 @@
 
 # WARNING - Steps before mkarchiso are invoked as "darren" instead of "root"
 
-# Upgrade host system
-sudo pacman -Syu
-
-# Get package info
-# expac ...
-# ... | xargs pacman -Si | grep -e Name -e Description | cut ... | combine_2_lines | table ... | awk 'ORS=NR%7?RS:RS RS'
-while true; do
-  read -r pkg
-  pacman -Sii "$pkg" | grep --color=never Description
-  echo
-done
-
 # umask
 umask 0022
+umask -S
 
 # Prepare a custom profile
 cd /home/darren/archiso
 rm -rf archlive
 cp -r /usr/share/archiso/configs/releng archlive
 
-# Selecting packages
-# pkg=(
-#   busybox
-#   curl
-#   iproute2
-#   iputils
-#   linux # mkinitcpio
-#   # linux-firmware
-#   wget
-# )
-pkg=(
-  acpi
-  amd-ucode
-  android-tools
-  arch-install-scripts
-  b43-fwcutter
-  base
-  bind
-  broadcom-wl
-  busybox # httpd
-  crda
-  curl
-  ddrescue
-  dhclient
-  dhcpcd
-  diffutils
-  dmidecode
-  dosfstools
-  efibootmgr
-  ethtool
-  gnu-netcat
-  gpm
-  gptfdisk
-  grml-zsh-config
-  grub
-  hdparm
-  intel-ucode
-  iproute2
-  ipw2100-fw
-  ipw2200-fw
-  iw
-  iwd
-  ldns
-  linux-firmware
-  lshw
-  lsscsi
-  man-db
-  man-pages
-  mc
-  memtest86+
-  mtools
-  nano
-  ndisc6
-  net-tools
-  nmap
-  ntfs-3g
-  nvme-cli
-  openssh
-  parted
-  pciutils
-  ppp
-  refind
-  rp-pppoe
-  rsync
-  sdparm
-  sg3_utils
-  smartmontools
-  squashfs-tools
-  sudo
-  terminus-font
-  testdisk
-  tlp
-  tmux
-  tree
-  udisks2
-  upower
-  usb_modeswitch
-  usbutils
-  vi
-  vim
-  wget
-  wireless-regdb
-  wireless_tools
-  wpa_supplicant
-  wvdial
-)
-printf '%s\n' "${pkg[@]}" >/home/darren/archiso/archlive/packages.x86_64
-pacman -Si - </home/darren/archiso/archlive/packages.x86_64 1>/dev/null
-diff --color=auto --suppress-common-lines -u999 /usr/share/archiso/configs/releng/packages.x86_64 packages.x86_64
+
+# Adding files to image - mount points
+mkdir -v /home/darren/archiso/archlive/airootfs/mnt.ext4/
+mkdir -v /home/darren/archiso/archlive/airootfs/mnt.ntfs/
 
 # Adding files to image - mksquashfs.sh
 # https://wiki.archlinux.org/index.php/Full_system_backup_with_SquashFS
@@ -128,8 +32,6 @@ fi
 echo -ne "\n  Have you fsck'd? "
 read -r
 echo
-exit 0
-# Backup
 mksquashfs \
   "$1" "$2/$(date +%Y%m%d_%a).sfs" \
   -comp gzip \
@@ -167,6 +69,8 @@ rm    -v  /home/darren/archiso/archlive/airootfs/etc/systemd/system/network-onli
 rmdir -v  /home/darren/archiso/archlive/airootfs/etc/systemd/system/network-online.target.wants/
 
 # Users and passwords
+# QUOTING & HISTORY EXPANSION '!''
+set +H
 # diff -u <(cat /home/darren/archiso/archlive/airootfs/etc/shadow) <(sudo grep root /etc/shadow)
 # Groups
 echo "darren:x:1000:"  >>/home/darren/archiso/archlive/airootfs/etc/group
@@ -177,15 +81,20 @@ echo "darren:x:1000:1000:darren:/home/darren:/usr/bin/zsh"               >>/home
 sed -i "s|root::14871::::::|root:$(openssl passwd -6 "archiso"):14871::::::|g"   /home/darren/archiso/archlive/airootfs/etc/shadow
 echo                     "darren:$(openssl passwd -6 "archiso"):14871::::::"   >>/home/darren/archiso/archlive/airootfs/etc/shadow
 #
-diff -u {/usr/share/archiso/configs/releng,/home/darren/archiso/archlive}/airootfs/etc/group
-diff -u {/usr/share/archiso/configs/releng,/home/darren/archiso/archlive}/airootfs/etc/gshadow
-diff -u {/usr/share/archiso/configs/releng,/home/darren/archiso/archlive}/airootfs/etc/passwd
-diff -u {/usr/share/archiso/configs/releng,/home/darren/archiso/archlive}/airootfs/etc/shadow
+diff -uN {/usr/share/archiso/configs/releng,/home/darren/archiso/archlive}/airootfs/etc/group
+diff -uN {/usr/share/archiso/configs/releng,/home/darren/archiso/archlive}/airootfs/etc/gshadow
+diff -uN {/usr/share/archiso/configs/releng,/home/darren/archiso/archlive}/airootfs/etc/passwd
+diff -uN {/usr/share/archiso/configs/releng,/home/darren/archiso/archlive}/airootfs/etc/shadow
 
 # Build the ISO
+# Close apps to free up some RAM
+sudo sh -c 'echo 3 >/proc/sys/vm/drop_caches'
+free -h
+#
 sudo \
   /usr/bin/time --format="\n  wall clock time - %E\n" \
   mkarchiso -c xz -o /home/darren/archiso/ -s sfs -v -w /tmp/archiso-tmp/ /home/darren/archiso/archlive/
+#
 sudo chown -v darren:darren /home/darren/archiso/archlinux-????.??.??-x86_64.iso
 
 # Removal of work directory
@@ -218,6 +127,7 @@ free -h
 #   -machine type=kvm64 \
 #   -cpu host \
 
+# Changing files in image - enable sshd.service
 # https://wiki.archlinux.org/index.php/Archiso#Prepare_an_ISO_for_an_installation_via_SSH
 # ln -sfv \
 #   /home/darren/archiso/archlive/airootfs/usr/lib/systemd/system/sshd.service \

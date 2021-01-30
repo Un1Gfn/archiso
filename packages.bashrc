@@ -22,7 +22,9 @@ function colorecho {
 }
 
 function prepare {
-  read -rp "Have you updated package db and file db? "
+  echo "1) sudo pacman -Syu"
+  echo "2) sudo pacman -Fy"
+  read -rp "Done? "
   echo
 }
 
@@ -92,6 +94,8 @@ function parse_conf {
   colorecho 32 "ok"
   echo
 
+  # echo -n "$UNQ"
+
 }
 
 # https://stackoverflow.com/a/9715377
@@ -104,7 +108,6 @@ function parse_conf {
 #   return 0
 # }
 
-echo
 { 
   prepare &&
   parse_conf packages.conf &&
