@@ -1,7 +1,4 @@
-#!/dev/null
-# Must be sourced instead of executed
-
-# comm -3 <(echo -n "$RELENG") <(echo -n "$UNQ") | column --output-separator '|' --separator $'\t' --table
+#!/bin/bash
 
 function coloron {
   (( $#==1 && 30<=$1 && $1<=37 )) || { echo "${FUNCNAME[0]}: error"; return 1; }
@@ -49,7 +46,7 @@ function str_end_with_newline_sorted {
 
 function parse_conf {
 
-  { (($#==1)) && [ -f "$1" ]; } || { echo "${FUNCNAME[0]}: error 0"; return 1; }
+  { (($#==2)) && [ -f "$1" ]; } || { echo "${FUNCNAME[0]}: error 0"; return 1; }
 
   # local WHITESPACE_TO_NEWLINE='s|\s\+|\n|g'
   # sed --expression="$STRIP_COMMENTS" --expression="$WHITESPACE_TO_NEWLINE" packages.conf
@@ -94,9 +91,13 @@ function parse_conf {
   colorecho 32 "ok"
   echo
 
-  # echo -n "$UNQ"
+  [ -d "$(dirname "$2")" ] || { echo "${FUNCNAME[0]}: error 6"; return 1; }
+  echo -n "$UNQ" >"$2"
+  echo "Packages written to $(realpath "$2")"
 
 }
+
+# comm -3 <(echo -n "$RELENG") <(echo -n "$UNQ") | column --output-separator '|' --separator $'\t' --table
 
 # https://stackoverflow.com/a/9715377
 # A="lorem"
@@ -110,9 +111,7 @@ function parse_conf {
 
 { 
   prepare &&
-  parse_conf packages.conf &&
+  parse_conf ./packages.conf ./archlive/packages.x86_64 &&
   echo
 }
 echo
-
-# dict

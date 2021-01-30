@@ -1,10 +1,17 @@
 #!/dev/null
+# Copy and paste into terminal manually
+# No sourcing or executing
 
 # WARNING - Do not clear screen before successful output
 
 # WARNING - Steps before mkarchiso are invoked as "darren" instead of "root"
 
 # umask
+# /etc/profile
+#   Type     Default w/o mask  Mask       Mask applied
+# ---------  ----------------  ----  ------------------------
+#   File      0666=rwxrwxrwx   0022  0666-0022=0644=rw-r--r--
+# Directory   0777=rwxrwxrwx   0022  0777-0022=0755=rwxr-xr-x
 umask 0022
 umask -S
 
@@ -12,7 +19,6 @@ umask -S
 cd /home/darren/archiso
 rm -rf archlive
 cp -r /usr/share/archiso/configs/releng archlive
-
 
 # Adding files to image - mount points
 mkdir -v /home/darren/archiso/archlive/airootfs/mnt.ext4/
