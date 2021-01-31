@@ -15,19 +15,35 @@
 umask 0022
 umask -S
 
+# Variablize
+PROJ="$HOME/archiso"
+#
+RELENG="/usr/share/archiso/configs/releng"
+LIVE="$PROJ/archlive"
+#
+ARFS="$LIVE/airootfs"
+ARFS0="$RELENG/airootfs"
+
 # Prepare a custom profile
-cd /home/darren/archiso
-rm -rf archlive
-cp -r /usr/share/archiso/configs/releng archlive
+if [ -e "$LIVE" ]; then
+  read -rp "Remove archlive? "
+  rm -rf "$LIVE"
+  cp -r "$RELENG" "$LIVE"
+else
+  cp -r "$RELENG" "$LIVE"
+fi
+
+# motd(5) issue(5)
+{ echo "/etc/motd"; echo; cat "$ARFS/etc/motd"; } | sponge "$ARFS/etc/motd"
 
 # Adding files to image - mount points
-mkdir -v /home/darren/archiso/archlive/airootfs/mnt.ext4/
-mkdir -v /home/darren/archiso/archlive/airootfs/mnt.ntfs/
+mkdir -v "$ARFS/mnt.ext4"
+mkdir -v "$ARFS/mnt.ntfs"
 
 # Adding files to image - mksquashfs.sh
 # https://wiki.archlinux.org/index.php/Full_system_backup_with_SquashFS
-install -m755 -v /dev/null /home/darren/archiso/archlive/airootfs/usr/local/bin/mksquashfs.sh
-cat <<"EOF" >>/home/darren/archiso/archlive/airootfs/usr/local/bin/mksquashfs.sh
+install -m755 -v /dev/null "$ARFS/usr/local/bin/mksquashfs.sh"
+cat <<"EOF" >>"$ARFS/usr/local/bin/mksquashfs.sh"
 #!/bin/bash
 if [ $# -ne 2 ] || [ ! -d "$1" ] || [ ! -d "$2" ]; then
   echo
@@ -68,29 +84,31 @@ EOF
 # Created symlink /etc/systemd/system/sockets.target.wants/systemd-networkd.socket → /usr/lib/systemd/system/systemd-networkd.socket.
 # Created symlink /etc/systemd/system/network-online.target.wants/systemd-networkd-wait-online.service → /usr/lib/systemd/system/systemd-networkd-wait-online.service.
 # rm -fv /root/archlive/airootfs/etc/udev/rules.d/81-dhcpcd.rules
-rm    -v  /home/darren/archiso/archlive/airootfs/etc/systemd/system/multi-user.target.wants/iwd.service
-rm    -v  /home/darren/archiso/archlive/airootfs/etc/systemd/system/multi-user.target.wants/reflector.service
-rm    -v  /home/darren/archiso/archlive/airootfs/etc/systemd/system/multi-user.target.wants/systemd-networkd.service
-rm    -v  /home/darren/archiso/archlive/airootfs/etc/systemd/system/network-online.target.wants/systemd-networkd-wait-online.service
-rmdir -v  /home/darren/archiso/archlive/airootfs/etc/systemd/system/network-online.target.wants/
+rm -v \
+  "$ARFS/etc/systemd/system/multi-user.target.wants/iwd.service" \
+  "$ARFS/etc/systemd/system/multi-user.target.wants/reflector.service" \
+  "$ARFS/etc/systemd/system/multi-user.target.wants/systemd-networkd.service" \
+  "$ARFS/etc/systemd/system/network-online.target.wants/systemd-networkd-wait-online.service" \
+&& rmdir -v \
+  "$ARFS/etc/systemd/system/network-online.target.wants/"
 
 # Users and passwords
 # QUOTING & HISTORY EXPANSION '!''
 set +H
-# diff -u <(cat /home/darren/archiso/archlive/airootfs/etc/shadow) <(sudo grep root /etc/shadow)
+# diff -u <(cat $ARFS/etc/shadow) <(sudo grep root /etc/shadow)
 # Groups
-echo "darren:x:1000:"  >>/home/darren/archiso/archlive/airootfs/etc/group
-echo   "root:!!::root" >>/home/darren/archiso/archlive/airootfs/etc/gshadow
-echo "darren:!!::"     >>/home/darren/archiso/archlive/airootfs/etc/gshadow
+echo "darren:x:1000:"  >>"$ARFS/etc/group"
+echo   "root:!!::root" >>"$ARFS/etc/gshadow"
+echo "darren:!!::"     >>"$ARFS/etc/gshadow"
 # Users
-echo "darren:x:1000:1000:darren:/home/darren:/usr/bin/zsh"               >>/home/darren/archiso/archlive/airootfs/etc/passwd
-sed -i "s|root::14871::::::|root:$(openssl passwd -6 "archiso"):14871::::::|g"   /home/darren/archiso/archlive/airootfs/etc/shadow
-echo                     "darren:$(openssl passwd -6 "archiso"):14871::::::"   >>/home/darren/archiso/archlive/airootfs/etc/shadow
+echo  "darren:x:1000:1000:darren:/home/darren:/usr/bin/zsh"                    >>"$ARFS/etc/passwd"
+sed -i "s|root::14871::::::|root:$(openssl passwd -6 "archiso"):14871::::::|g"   "$ARFS/etc/shadow"
+echo                     "darren:$(openssl passwd -6 "archiso"):14871::::::"   >>"$ARFS/etc/shadow"
 #
-diff -uN {/usr/share/archiso/configs/releng,/home/darren/archiso/archlive}/airootfs/etc/group
-diff -uN {/usr/share/archiso/configs/releng,/home/darren/archiso/archlive}/airootfs/etc/gshadow
-diff -uN {/usr/share/archiso/configs/releng,/home/darren/archiso/archlive}/airootfs/etc/passwd
-diff -uN {/usr/share/archiso/configs/releng,/home/darren/archiso/archlive}/airootfs/etc/shadow
+diff -uN $ARFS{0,}/etc/group
+diff -uN $ARFS{0,}/etc/gshadow
+diff -uN $ARFS{0,}/etc/passwd
+diff -uN $ARFS{0,}/etc/shadow
 
 # Build the ISO
 # Close apps to free up some RAM
@@ -99,7 +117,7 @@ free -h
 #
 sudo \
   /usr/bin/time --format="\n  wall clock time - %E\n" \
-  mkarchiso -c xz -o /home/darren/archiso/ -s sfs -v -w /tmp/archiso-tmp/ /home/darren/archiso/archlive/
+  mkarchiso -c xz -o /home/darren/archiso/ -s sfs -v -w "/tmp/archiso-tmp/" "$LIVE/"
 #
 sudo chown -v darren:darren /home/darren/archiso/archlinux-????.??.??-x86_64.iso
 
@@ -136,8 +154,8 @@ free -h
 # Changing files in image - enable sshd.service
 # https://wiki.archlinux.org/index.php/Archiso#Prepare_an_ISO_for_an_installation_via_SSH
 # ln -sfv \
-#   /home/darren/archiso/archlive/airootfs/usr/lib/systemd/system/sshd.service \
-#   /home/darren/archiso/archlive/airootfs/etc/systemd/system/multi-user.target.wants/sshd.service
+#   "$ARFS/usr/lib/systemd/system/sshd.service" \
+#   "$ARFS/etc/systemd/system/multi-user.target.wants/sshd.service"
 
 # Serial connection (non-EFI only)
 # https://wiki.archlinux.org/index.php/Working_with_the_serial_console#Installing_Arch_Linux_using_the_serial_console
