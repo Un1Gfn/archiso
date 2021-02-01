@@ -25,6 +25,7 @@ LIVE0="/usr/share/archiso/configs/releng"
 LIVE="$PROJ/archlive"
 #
 ARFS="$LIVE/airootfs"
+# shellcheck disable=SC2034
 ARFS0="$LIVE0/airootfs"
 #
 source packages.bashrc
@@ -60,6 +61,9 @@ mkdir -v "$ARFS/mnt.nvme" "$ARFS/mnt.usb"
 # Add to "file_permissions" array in "$LIVE/profiledef.sh" if 755 fails
 # https://gitlab.archlinux.org/archlinux/archiso/-/blob/master/README.profile.rst#airootfs
 install -m755 -v mksquashfs.sh "$ARFS/usr/local/bin/mksquashfs.sh"
+sed --expression='/^file_permissions=(/a \ \ ["/usr/local/bin/mksquashfs.sh"]="0:0:755"' --in-place "$LIVE/profiledef.sh"
+# shellcheck disable=SC2086
+diff -u $LIVE{0,}/profiledef.sh
 
 disable_waiting_for_network
 
@@ -70,6 +74,7 @@ sudo sh -c 'echo 3 >/proc/sys/vm/drop_caches'
 free -h
 
 # Mount snapshot
+# shellcheck disable=SC2024
 sudo findmnt -A >/tmp/findmnt0
 
 # Build ISO as root
