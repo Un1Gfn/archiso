@@ -15,6 +15,7 @@ function disable_waiting_for_network {
   # Created symlink /etc/systemd/system/network-online.target.wants/systemd-networkd-wait-online.service → /usr/lib/systemd/system/systemd-networkd-wait-online.service.
   # rm -fv /root/archlive/airootfs/etc/udev/rules.d/81-dhcpcd.rules
   rm -v \
+    "$ARFS/etc/systemd/system/multi-user.target.wants/choose-mirror.service" \
     "$ARFS/etc/systemd/system/multi-user.target.wants/iwd.service" \
     "$ARFS/etc/systemd/system/multi-user.target.wants/reflector.service" \
     "$ARFS/etc/systemd/system/multi-user.target.wants/systemd-networkd.service" \
