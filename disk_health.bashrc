@@ -22,20 +22,48 @@ function get_model {
 }
 
 function destructive {
-  { (($#==1)) && [[ -b "$1" ]] && [[ "$(whoami)" = "root" ]]; } || { echo "${FUNCNAME[0]}: error1"; return 1; }
+  {
+    [[ "$(whoami)" = "root" ]] && [[ -b "$1" ]] && {
+        (($#==1)) ||
+      { (($#==2)) && [[ "$2" =~ ^[0-9]+$ ]] && [[ "$2" -ge 1 ]]; }
+    }
+  } || {
+    echo "${FUNCNAME[0]}: error1"
+    return 1
+  }
   lsblk -f "$1"
   echo
   local MODEL
   MODEL="$(get_model "$1")" || { echo "${FUNCNAME[0]}: error2"; return 1; }
   read -erp "wipe \"$MODEL\"? "
   echo
-  # /usr/bin/time --format="\n  wall clock time - %E\n" badblocks -e 1 -o "/root/$(get_model "$1").txt" -s -v -w "$1"
-  /usr/bin/time --format="\n  wall clock time - %E\n" badblocks -o ~darren/archiso/"badblocks_$MODEL.txt" -s -v -w "$1"
+  # -e 1
+  /usr/bin/time --format="\n  wall clock time - %E\n" badblocks \
+    -b 1024 \
+    -o ~darren/archiso/"badblocks_$MODEL.txt" \
+    -s \
+    -v \
+    -w \
+  "$1" "$2"
 }
 
-function main {
+# Approx. 60Gi
+function hitachi {
   destructive /dev/sda
 }
 
+# Approx. 500Gi
+# Test the first 100Gi only
+function toshiba {
+  local BLK_SZ=$((1024))
+  local Ki=$((1024))
+  local Mi=$((1024*Ki))
+  local Gi=$((1024*Mi))
+  local number_of_blocks_in_100Gi=$((100*Gi/BLK_SZ))
+  echo "$number_of_blocks_in_100Gi"
+  destructive /dev/sda "$number_of_blocks_in_100Gi"
+}
+
 echo
-main
+
+toshiba
