@@ -63,18 +63,33 @@ install -m755 -v mksquashfs.sh "$ARFS/usr/local/bin/mksquashfs.sh"
 
 disable_waiting_for_network
 
-# Build the ISO
-# Close apps to free up some RAM
+# Stop using Chromium!
+# Close other apps to free up some RAM
 free -h
 sudo sh -c 'echo 3 >/proc/sys/vm/drop_caches'
 free -h
-#
+
+# Mount snapshot
 sudo findmnt -A >/tmp/findmnt0
+
+# Build ISO as root
 sudo \
   /usr/bin/time --format="\n  wall clock time - %E\n" \
-  mkarchiso -c xz -o "$PROJ" -s sfs -v -w "/tmp/archiso-tmp/" "$LIVE/"
-#
-sudo chown -v darren:darren "$PROJ"/archlinux-????.??.??-x86_64.iso
+  mkarchiso -v -w "/tmp/archiso-tmp/" -o "$PROJ" "$LIVE"
+sudo chown -v darren:darren archlinux-????.??.??-x86_64.iso
+
+# Log
+# Scroll to the beginning w/ Shift+Home
+# Left click
+# Scroll to the end w/ Shift+End
+# Right click
+# Copy
+# Paste to archlinux-<TAB><TAB>.log
+
+# Initial checksum record
+# sha256sum archlinux-????.??.??-x86_64.iso >>sha256sum.txt
+# Further checksum verifications
+# sha256sum -c sha256sum.txt
 
 # Removal of work directory
 # WARNING - make sure there are no mount binds before deleting /tmp/archiso-tmp
