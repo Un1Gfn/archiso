@@ -1,54 +1,30 @@
 #!/dev/null
-# Must be sourced (optional) instead of executed
-
-function disable_waiting_for_network {
-  # env SYSTEMD_COLORS=1 systemctl --no-pager list-dependencies | less -SRM +%
-  # systemd-networkd-wait-online.service
-  # /etc/systemd/system/network-online.target.wants/systemd-networkd-wait-online.service → /usr/lib/systemd/system/systemd-networkd-wait-online.service
-  # systemd-resolved.service
-  # Created symlink /etc/systemd/system/dbus-org.freedesktop.resolve1.service → /usr/lib/systemd/system/systemd-resolved.service.
-  # Created symlink /etc/systemd/system/multi-user.target.wants/systemd-resolved.service → /usr/lib/systemd/system/systemd-resolved.service.
-  # systemd-networkd.service
-  # Created symlink /etc/systemd/system/dbus-org.freedesktop.network1.service → /usr/lib/systemd/system/systemd-networkd.service.
-  # Created symlink /etc/systemd/system/multi-user.target.wants/systemd-networkd.service → /usr/lib/systemd/system/systemd-networkd.service.
-  # Created symlink /etc/systemd/system/sockets.target.wants/systemd-networkd.socket → /usr/lib/systemd/system/systemd-networkd.socket.
-  # Created symlink /etc/systemd/system/network-online.target.wants/systemd-networkd-wait-online.service → /usr/lib/systemd/system/systemd-networkd-wait-online.service.
-  # rm -fv /root/archlive/airootfs/etc/udev/rules.d/81-dhcpcd.rules
-  rm -v \
-    "$ARFS/etc/systemd/system/multi-user.target.wants/choose-mirror.service" \
-    "$ARFS/etc/systemd/system/multi-user.target.wants/iwd.service" \
-    "$ARFS/etc/systemd/system/multi-user.target.wants/reflector.service" \
-    "$ARFS/etc/systemd/system/multi-user.target.wants/systemd-networkd.service" \
-    "$ARFS/etc/systemd/system/network-online.target.wants/systemd-networkd-wait-online.service" \
-  && rmdir -v \
-    "$ARFS/etc/systemd/system/network-online.target.wants/"
-}
 
 # function create_user {
 #   # Users and passwords
 #   # QUOTING & HISTORY EXPANSION '!''
 #   set +H
-#   # diff -u <(cat $ARFS/etc/shadow) <(sudo grep root /etc/shadow)
+#   # diff -u <(cat $AIROOTFS/etc/shadow) <(sudo grep root /etc/shadow)
 #   # Groups
-#   echo "darren:x:1000:"  >>"$ARFS/etc/group"
-#   echo   "root:!!::root" >>"$ARFS/etc/gshadow"
-#   echo "darren:!!::"     >>"$ARFS/etc/gshadow"
+#   echo "darren:x:1000:"  >>"$AIROOTFS/etc/group"
+#   echo   "root:!!::root" >>"$AIROOTFS/etc/gshadow"
+#   echo "darren:!!::"     >>"$AIROOTFS/etc/gshadow"
 #   # Users
-#   echo  "darren:x:1000:1000:darren:/home/darren:/usr/bin/zsh"                    >>"$ARFS/etc/passwd"
-#   sed -i "s|root::14871::::::|root:$(openssl passwd -6 "archiso"):14871::::::|g"   "$ARFS/etc/shadow"
-#   echo                     "darren:$(openssl passwd -6 "archiso"):14871::::::"   >>"$ARFS/etc/shadow"
+#   echo  "darren:x:1000:1000:darren:/home/darren:/usr/bin/zsh"                    >>"$AIROOTFS/etc/passwd"
+#   sed -i "s|root::14871::::::|root:$(openssl passwd -6 "archiso"):14871::::::|g"   "$AIROOTFS/etc/shadow"
+#   echo                     "darren:$(openssl passwd -6 "archiso"):14871::::::"   >>"$AIROOTFS/etc/shadow"
 #   #
-#   diff -uN $ARFS{0,}/etc/group
-#   diff -uN $ARFS{0,}/etc/gshadow
-#   diff -uN $ARFS{0,}/etc/passwd
-#   diff -uN $ARFS{0,}/etc/shadow
+#   diff -uN $AIROOTFS{0,}/etc/group
+#   diff -uN $AIROOTFS{0,}/etc/gshadow
+#   diff -uN $AIROOTFS{0,}/etc/passwd
+#   diff -uN $AIROOTFS{0,}/etc/shadow
 # }
 
 # function enable_sshd {
 #   https://wiki.archlinux.org/index.php/Archiso#Prepare_an_ISO_for_an_installation_via_SSH
 #   ln -sfv \
-#     "$ARFS/usr/lib/systemd/system/sshd.service" \
-#     "$ARFS/etc/systemd/system/multi-user.target.wants/sshd.service"
+#     "$AIROOTFS/usr/lib/systemd/system/sshd.service" \
+#     "$AIROOTFS/etc/systemd/system/multi-user.target.wants/sshd.service"
 # }
 
 # function serial_connection_no_efi {
