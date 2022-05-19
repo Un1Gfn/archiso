@@ -4,3 +4,4 @@
 /archlinux-????.??.??-x86_64.iso.sha256sum
 /sha256sum.txt
 /badblocks_*.txt
+/__pycache__/
