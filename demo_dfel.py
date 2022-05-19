@@ -3,32 +3,10 @@
 import posix
 import posixpath
 import prettytable
-import pydoc
 import shutil
 import termcolor
-from inspect import *
 
 x = None
-
-# def list_functions(module):
-#     l = getmembers(
-#         module,
-#         lambda x: ismethod(x) or isfunction(x) or isbuiltin(x) or isroutine(x))
-#     s = ""
-#     for _, f in l:
-#         s += f.__name__
-#         s += "\n"
-#     pydoc.pager(s)
-#     for _, f in l:
-#         print(f.__name__ + "()")
-
-# def clean(path):
-#     posix.system(f"rm -rf {path}")
-#     # os.unlink()
-#     # try:
-#     #     shutil.rmtree(TARGET)
-#     # except FileNotFoundError as e:
-#     #     print(e)
 
 
 def table_init():
@@ -36,7 +14,7 @@ def table_init():
     global x
     x = prettytable.PrettyTable()
     x.fns0 = [
-        ("type", None),
+        ("type", ),
         ("d", "isdir"),
         ("f", "isfile"),
         ("e", "exists"),
@@ -61,37 +39,32 @@ def table_append(s, path):
 
 def main():
 
-    # list_functions(os)
-    # list_functions(posixpath)
-    # list_functions(posix)
-    # list_functions(shutil)
 
     TESTDIR = "/tmp/test"
+    _  = "/path/to/nonexist"
+    D  = f"{TESTDIR}/dir"
+    F  = f"{TESTDIR}/file"
     L_ = f"{TESTDIR}/link2dead"
     LD = f"{TESTDIR}/link2dir"
     LF = f"{TESTDIR}/link2file"
-    D = f"{TESTDIR}/dir"
-    F = f"{TESTDIR}/file"
     table_init()
 
-    try:
-        shutil.rmtree(TESTDIR)
-    except:
-        FileNotFoundError
+    try: shutil.rmtree(TESTDIR)
+    except FileNotFoundError: pass
     posix.mkdir(TESTDIR)
 
-    posix.symlink("/path/to/nonexist", L_)
+    posix.symlink(_, L_)
     posix.mkdir(D)
     posix.symlink(D, LD)
     open(F, 'w').close()
     posix.symlink(F, LF)
 
-    table_append("nonexist", "/NONEXIST")
+    table_append("nonexist",     _)
     table_append("symlink2dead", L_)
-    table_append("symlink2dir", LD)
+    table_append("symlink2dir",  LD)
     table_append("symlink2file", LF)
-    table_append("dir", D)
-    table_append("file", F)
+    table_append("dir",           D)
+    table_append("file",          F)
     print(x)
 
     try:
