@@ -1,6 +1,10 @@
 #!/dev/null
 
+TRIM = False
+
 STRICT_MYPKG = False
+
+WORK_DIR = '/tmp/archiso-tmp/'
 
 FILELIGHTRC = "/root/.config/filelightrc"
 

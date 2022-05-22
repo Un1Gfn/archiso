@@ -1,6 +1,8 @@
 #!/bin/python3
 
 import code
+import textwrap
+import glob
 import time
 import colorama
 import difflib
@@ -106,7 +108,7 @@ def check_pkg():
 
 
 def copy_releng():
-    
+
     assert not posix.access(ARCHLIVE, os.F_OK, follow_symlinks=False)
     shutil.copytree(RELENG, ARCHLIVE, symlinks=True, dirs_exist_ok=False)  # https://wiki.archlinux.org/title/Talk:Archiso#cp_-r_drops_dead_links
 
@@ -218,20 +220,12 @@ def collect_perms(ps):
         f.write(s)
 
 
-def freeup():
+def drop_caches():
 
-    input('please close browser ')
-    print()
-
-    input('drop caches? ')
     assert subprocess.run(['free', '-h']).returncode == 0
+    print('droping caches ...')
     assert subprocess.run(['sudo', 'tee', '/proc/sys/vm/drop_caches'], input=b'3', stdout=subprocess.DEVNULL).returncode == 0
     assert subprocess.run(['free', '-h']).returncode == 0
-    print()
-
-    # input('trim? ')
-    # assert subprocess.run(['sudo', 'systemctl', 'start', 'fstrim.service']).returncode == 0
-    print('trim skipped')
     print()
 
 
@@ -242,14 +236,64 @@ def readmnt():
     return r
 
 
+def syslinux_no_lvds1():
+
+    s = '''
+    # Copy to RAM boot option
+    LABEL arch64ram
+    TEXT HELP
+    Boot the Arch Linux install medium on BIOS with Copy-to-RAM option
+    It allows you to install Arch Linux or perform system maintenance.
+    ENDTEXT
+    MENU LABEL Arch Linux install medium (x86_64, BIOS, Copy to RAM)
+    LINUX /%INSTALL_DIR%/boot/x86_64/vmlinuz-linux
+    INITRD /%INSTALL_DIR%/boot/intel-ucode.img,/%INSTALL_DIR%/boot/amd-ucode.img,/%INSTALL_DIR%/boot/x86_64/initramfs-linux.img
+    APPEND archisobasedir=%INSTALL_DIR% archisolabel=%ARCHISO_LABEL% copytoram
+    '''
+
+    # https://superuser.com/questions/636617/
+    # https://unix.stackexchange.com/questions/526608
+    # https://www.kernel.org/doc/html/v5.17/fb/modedb.html
+    m = 'LVDS-1'
+    s2 = f'''
+    # Copy to RAM boot option
+    LABEL arch64nolvds
+    TEXT HELP
+    Copy-to-RAM, {m} disabled
+    ENDTEXT
+    MENU LABEL Arch Linux install medium (x86_64, BIOS, Copy to RAM, {m} disabled)
+    LINUX /%INSTALL_DIR%/boot/x86_64/vmlinuz-linux
+    INITRD /%INSTALL_DIR%/boot/intel-ucode.img,/%INSTALL_DIR%/boot/amd-ucode.img,/%INSTALL_DIR%/boot/x86_64/initramfs-linux.img
+    APPEND archisobasedir=%INSTALL_DIR% archisolabel=%ARCHISO_LABEL% copytoram video={m}:d
+    '''
+
+    # https://stackoverflow.com/a/47417848/8243991
+    s = textwrap.dedent(s).strip() + '\n'
+    s2 = textwrap.dedent(s2).strip() + '\n'
+    # print(s, end="")
+
+    sys.stdout.writelines(difflib.unified_diff(s.splitlines(keepends=True), s2.splitlines(keepends=True), n=999))
+    print()
+
+    with open(posixpath.join(ARCHLIVE, 'syslinux/archiso_sys-linux.cfg'), 'r') as f:
+        orig = f.read()
+    assert s in orig
+    assert s2 not in orig
+    with open(posixpath.join(ARCHLIVE, 'syslinux/archiso_sys-linux.cfg'), 'w') as f:
+        f.write(f'{orig}\n{s}\n{s2}')
+
+
+    # ./efiboot/loader/entries/03-archiso-x86_64-ram-linux.conf
+
+
 def build():
 
     l = readmnt()
 
-    input('build iso? ')
-    print()
     try:
-        time.sleep(7)
+        input('build iso? ')
+        print()
+        subprocess.run(['sudo', 'mkarchiso', '-v', '-w', WORK_DIR, '-o', PROJ, ARCHLIVE])
     except KeyboardInterrupt:
         print(' abort\n')
 
@@ -258,6 +302,12 @@ def build():
         sys.stdout.writelines(d)
         input('please clean up bind mounts to avoid data loss ')
         print()
+
+    subprocess.run(['sudo', 'chown', '-v', 'darren:darren'] + glob.glob(posixpath.join(PROJ, 'archlinux-*.iso')))
+    print()
+
+    input('please sha1sum the newly generated iso and append to /home/darren/sphinx.public/archiso.rst ')
+    print()
 
 
 def main():
@@ -269,8 +319,7 @@ def main():
     assert 'TMUX' in os.environ
     assert posix.getuid() == 1000 and posix.getgid() == 1000
 
-    input('please \'pacman -Syuu\' ')
-    print()
+    input('please \'pacman -Syuu\' '); print()
 
     check_umask()
 
@@ -282,15 +331,29 @@ def main():
     convenience_mountpoints()
     timezone()
     motd()
+    syslinux_no_lvds1()
 
     perms = []
     perms += authorized_keys()
     perms += backup_script()
     collect_perms(perms)
 
-    freeup()
+    input('please close browser '); print()
+
+    drop_caches()
+
+    if TRIM:
+        input('trim? ')
+        assert subprocess.run(['sudo', 'systemctl', 'start', 'fstrim.service']).returncode == 0
+    else:
+        print('trim skipped')
+    print()
 
     build()
+
+    drop_caches()
+    print(f'please manually remove {WORK_DIR}\n')
+
 
 
 
