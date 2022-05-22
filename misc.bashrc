@@ -20,13 +20,6 @@
 #   diff -uN $AIROOTFS{0,}/etc/shadow
 # }
 
-# function enable_sshd {
-#   https://wiki.archlinux.org/index.php/Archiso#Prepare_an_ISO_for_an_installation_via_SSH
-#   ln -sfv \
-#     "$AIROOTFS/usr/lib/systemd/system/sshd.service" \
-#     "$AIROOTFS/etc/systemd/system/multi-user.target.wants/sshd.service"
-# }
-
 # function serial_connection_no_efi {
 #   # https://wiki.archlinux.org/index.php/Working_with_the_serial_console#Installing_Arch_Linux_using_the_serial_console
 #   # https://wiki.archlinux.org/index.php/Syslinux#Kernel_parameters
@@ -34,21 +27,6 @@
 #   sed -e '/APPEND/ s/$/ console=ttyS0,38400/' /root/archlive/syslinux/archiso_sys.cfg >tmp.cfg
 #   diff -u /root/archlive/syslinux/archiso_sys.cfg tmp.cfg --color=always
 #   mv -iv tmp.cfg /root/archlive/syslinux/archiso_sys.cfg # Press 'y' before Enter!
-# }
-
-# function download_mirrorlist_and_tianocore {
-#   cd /root/archlive
-#   proxychains -q wget -O mirrorlist 'https://www.archlinux.org/mirrorlist/?country=all&protocol=http&use_mirror_status=on'
-#   # proxychains -q wget 'https://raw.githubusercontent.com/tianocore/edk2/UDK2018/ShellBinPkg/UefiShell/X64/Shell.efi'
-#   # proxychains -q wget 'https://raw.githubusercontent.com/tianocore/edk2/UDK2018/EdkShellBinPkg/FullShell/X64/Shell_Full.efi'
-#   sed -E \
-#     -e 's#curl.*mirrorlist.*#cp /etc/pacman.d/mirrorlist ${work_dir}/x86_64/airootfs/etc/pacman.d/mirrorlist#g' \
-#     -e 's#curl.*shellx64_v2.*#mv Shell.efi ${work_dir}/iso/EFI/shellx64_v2.efi#g' \
-#     -e 's#curl.*shellx64_v1.*#mv Shell_Full.efi ${work_dir}/iso/EFI/shellx64_v1.efi#g' \
-#     build.sh \
-#     >tmp.sh
-#   diff --color=always -u build.sh tmp.sh
-#   mv tmp.sh build.sh
 # }
 
 # function qemu_iso {

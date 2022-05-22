@@ -9,33 +9,87 @@ RELENG = "/usr/share/archiso/configs/releng"
 BTPKG = "bootstrap_packages.x86_64"
 PKG = "packages.x86_64"
 
-PROJ = "$HOME/archiso"
+PROJ = "/home/darren/archiso"
 ARCHLIVE = f"{PROJ}/archlive"
 AIROOTFS = f"{ARCHLIVE}/airootfs"
 
-IGN_BOTH = [
+IGN_BOTH = {
     "var/cache/pacman/pkg",
     "var/lib/pacman/sync",
     "home/darren/pmos/[BAK1]",
-]
+}
 
 # https://docs.python.org/3/reference/expressions.html#list-displays
-IGN_FILELIGHT = ["/"+s for s in IGN_BOTH + [
+IGN_FILELIGHT = {"/"+s for s in IGN_BOTH} | {
     "dev",
     "proc",
     "sys",
     "var/log/journal",
-] ]
+}
 
-IGN_MKSQUASHFS = IGN_BOTH + [
+IGN_MKSQUASHFS = IGN_BOTH | {
     "boot/EFI",
     "boot/initramfs-linux*.img",
     "boot/shellx64.efi",
     "boot/vmlinuz-linux*",
-]
+}
+
+SYMLINK_KEEP = {
+
+    # keep.misc
+    ("etc/resolv.conf", "/run/systemd/resolve/stub-resolv.conf"),
+    ("etc/systemd/system-generators/systemd-gpt-auto-generator", "/dev/null"),
+    ("etc/systemd/system/multi-user.target.wants/pacman-init.service", "../pacman-init.service"),
+    ("etc/systemd/system/sound.target.wants/livecd-alsa-unmuter.service", "../livecd-alsa-unmuter.service"),
+
+    # keep.network
+    ("etc/systemd/system/dbus-org.freedesktop.network1.service", "/usr/lib/systemd/system/systemd-networkd.service"),
+    ("etc/systemd/system/dbus-org.freedesktop.resolve1.service", "/usr/lib/systemd/system/systemd-resolved.service"),
+    ("etc/systemd/system/multi-user.target.wants/systemd-networkd.service", "/usr/lib/systemd/system/systemd-networkd.service"),
+    ("etc/systemd/system/multi-user.target.wants/systemd-resolved.service", "/usr/lib/systemd/system/systemd-resolved.service"),
+    ("etc/systemd/system/sockets.target.wants/systemd-networkd.socket", "/usr/lib/systemd/system/systemd-networkd.socket"),
+
+    # keep.sshd
+    ("etc/systemd/system/cloud-init.target.wants/cloud-config.service", "/usr/lib/systemd/system/cloud-config.service"),
+    ("etc/systemd/system/cloud-init.target.wants/cloud-final.service", "/usr/lib/systemd/system/cloud-final.service"),
+    ("etc/systemd/system/cloud-init.target.wants/cloud-init-local.service", "/usr/lib/systemd/system/cloud-init-local.service"),
+    ("etc/systemd/system/cloud-init.target.wants/cloud-init.service", "/usr/lib/systemd/system/cloud-init.service"),
+    ("etc/systemd/system/multi-user.target.wants/sshd.service", "/usr/lib/systemd/system/sshd.service"),
+
+}
+
+SYMLINK_DROP = {
+
+    # drop.misc
+    ("etc/localtime", "/usr/share/zoneinfo/UTC"),
+    ("etc/systemd/system/multi-user.target.wants/iwd.service", "/usr/lib/systemd/system/iwd.service"),
+    ("etc/systemd/system/multi-user.target.wants/livecd-talk.service", "/etc/systemd/system/livecd-talk.service"),
+    ("etc/systemd/system/network-online.target.wants/systemd-networkd-wait-online.service", "/usr/lib/systemd/system/systemd-networkd-wait-online.service"),
+
+    # drop.mirror
+    ("etc/systemd/system/multi-user.target.wants/choose-mirror.service", "../choose-mirror.service"),
+    ("etc/systemd/system/multi-user.target.wants/reflector.service", "/usr/lib/systemd/system/reflector.service"),
+
+    # drop.modem
+    ("etc/systemd/system/dbus-org.freedesktop.ModemManager1.service", "/usr/lib/systemd/system/ModemManager.service"),
+    ("etc/systemd/system/multi-user.target.wants/ModemManager.service", "/usr/lib/systemd/system/ModemManager.service"),
+
+    # drop.hyperv
+    ("etc/systemd/system/multi-user.target.wants/hv_fcopy_daemon.service", "/usr/lib/systemd/system/hv_fcopy_daemon.service"),
+    ("etc/systemd/system/multi-user.target.wants/hv_kvp_daemon.service", "/usr/lib/systemd/system/hv_kvp_daemon.service"),
+    ("etc/systemd/system/multi-user.target.wants/hv_vss_daemon.service", "/usr/lib/systemd/system/hv_vss_daemon.service"),
+    # drop.open-vm-tools (vmware)
+    ("etc/systemd/system/multi-user.target.wants/vmtoolsd.service", "/usr/lib/systemd/system/vmtoolsd.service"),
+    ("etc/systemd/system/multi-user.target.wants/vmware-vmblock-fuse.service", "/usr/lib/systemd/system/vmware-vmblock-fuse.service"),
+    # drop.qemu-guest-agent
+    ("etc/systemd/system/multi-user.target.wants/qemu-guest-agent.service", "/usr/lib/systemd/system/qemu-guest-agent.service"),
+    # drop.virtualbox-guest-utils
+    ("etc/systemd/system/multi-user.target.wants/vboxservice.service", "/usr/lib/systemd/system/vboxservice.service"),
+
+}
 
 # duplication allowed?
-MYPKG = [
+MYPKG = {
 
     # VM
     # "hyperv",
@@ -150,9 +204,10 @@ MYPKG = [
     "lrzsz",           # serial
     "man-db",
     "man-pages",
+    "mc",              # filemanager.midnightcommander  # error: mc: key "Jakob Gruber <jakob.gruber@gmail.com>" is disabled
     "minicom",         # serial
     "nano",
-    "nnn",             # mc alternative
+    "nnn",             # filemanager.nnn
     "pv",
     "sed",
     "terminus-font",
@@ -163,8 +218,6 @@ MYPKG = [
     "zsh",
 
     # Misc
-    # mc # error: mc: key "Jakob Gruber <jakob.gruber@gmail.com>" is disabled
-    # use nnn instead of mc
     "arch-install-scripts",  # arch-chroot genfstab pacstrap
     "archinstall",
     "memtest86+",
@@ -173,4 +226,4 @@ MYPKG = [
     "tpm2-tss",
     "tree",
 
-]
+}

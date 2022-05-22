@@ -18,12 +18,12 @@ def table_init():
         ("d", "isdir"),
         ("f", "isfile"),
         ("e", "exists"),
-        ("l", "islink"),
-        ("le", "lexists"),
+        ("E", "lexists"),
+        ("s", "islink"),
     ]
     x.field_names = [t[0] for t in x.fns0]
     x.align["type"] = "r"
-    x.align["le"] = "r"
+    # x.align["le"] = "r"
 
 
 def table_append(s, path):
@@ -59,10 +59,10 @@ def main():
     open(F, 'w').close()
     posix.symlink(F, LF)
 
-    table_append("nonexist",     _)
-    table_append("symlink2dead", L_)
-    table_append("symlink2dir",  LD)
-    table_append("symlink2file", LF)
+    table_append("dead",     _)
+    table_append("symlink_dead", L_)
+    table_append("symlink_dir",  LD)
+    table_append("symlink_file", LF)
     table_append("dir",           D)
     table_append("file",          F)
     print(x)
